@@ -62,6 +62,9 @@ app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
 def predict():
+
+    request = request.get_json()
+
     try:
         _id = request['observation_id']
     except:
