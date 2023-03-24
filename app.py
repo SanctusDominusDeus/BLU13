@@ -10,6 +10,7 @@ from peewee import (
 )
 from playhouse.shortcuts import model_to_dict
 from playhouse.db_url import connect
+from uuid import uuid4
 
 
 ########################################
