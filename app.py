@@ -18,6 +18,7 @@ from playhouse.db_url import connect
 # The connect function checks if there is a DATABASE_URL env var.
 # If it exists, it uses it to connect to a remote postgres db.
 # Otherwise, it connects to a local sqlite db stored in predictions.db.
+'''
 DB = connect(os.environ.get('DATABASE_URL') or 'sqlite:///predictions.db')
 
 class Prediction(Model):
@@ -32,6 +33,7 @@ class Prediction(Model):
 
 DB.create_tables([Prediction], safe=True)
 
+'''
 # End database stuff
 ########################################
 
