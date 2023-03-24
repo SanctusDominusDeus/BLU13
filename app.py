@@ -57,7 +57,63 @@ with open('dtypes.pickle', 'rb') as fh:
 
 app = Flask(__name__)
 
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        _id = request['observation_id']
+    except:
+        error = 'Missing observation_id.'
+        return {"observation_id":None,"error":error}
+    
+    try:
+        observation = request['data']
+    except:
+        error = 'Missing data for the observation.'
+        return {"observation_id":_id, "error": error}
+    
+    
+    #implement the mapping for the valid values
+    
+    valid_category_map = {
+                "age": range(0,100),
+                "sex": ['Male','Female'],
+                "race": ['White', 'Black', 'Asian-Pac-Islander', 'Amer-Indian-Eskimo','Other'],
+                "workclass": ['State-gov', 'Self-emp-not-inc', 'Private', 'Federal-gov','Local-gov','?', 'Self-emp-inc', 'Without-pay', 'Never-worked'],
+                "education": ['Bachelors', 'HS-grad', '11th', 'Masters', '9th', 'Some-college','Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school','5th-6th', '10th', '1st-4th', 'Preschool', '12th'],
+                "marital-status": ['Never-married', 'Married-civ-spouse', 'Divorced','Married-spouse-absent', 'Separated', 'Married-AF-spouse','Widowed'],
+                "capital-gain": range(0,100000),
+                "capital-loss": range(0,4357),
+                "hours-per-week": range(0,24*7),
+    }
+    for key in observation.keys():
+        if key not in valid_category_map.keys():
+            error = '{} is not valid input.'.format(key)
+            return {"observation_id":_id,"error":error}
+            
+    
+    for key, valid_categories in valid_category_map.items():
+        if key in observation:
+            value = observation[key]
+            if value not in valid_categories:
+                error = "Invalid value provided for {}: {}. Allowed values are: {}".format(
+                    key, value, ",".join(["'{}'".format(v) for v in valid_categories]))
+                return {"observation_id":_id,"error":error}
+        else:
+            error = "Categorical field {} missing".format(key)
+            return {"observation_id":_id,"error":error}
+    
+    
+    obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
+    prediction = pipeline.predict(obs)[0]
+    proba = pipeline.predict_proba(obs)[0,1]
 
+    response = {}
+    response['observation_id'] = _id
+    response['prediction'] = prediction
+    response['probability'] = proba
+    return response
+
+'''
 @app.route('/predict', methods=['POST'])
 def predict():
     # Flask provides a deserialization convenience function called
@@ -105,7 +161,7 @@ def list_db_contents():
         model_to_dict(obs) for obs in Prediction.select()
     ])
 
-
+'''
 # End webserver stuff
 ########################################
 
