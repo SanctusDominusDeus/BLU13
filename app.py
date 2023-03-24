@@ -64,6 +64,7 @@ app = Flask(__name__)
 def predict():
 
     obs_dict = request.get_json()
+    print(obs_dict)
 
     try:
         _id = obs_dict['observation_id']
