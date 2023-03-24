@@ -63,19 +63,19 @@ app = Flask(__name__)
 @app.route('/predict', methods=['POST'])
 def predict():
 
-    #obs_dict = request.get_json()
+    obs_dict = request.get_json()
 
     try:
-        _id = request['observation_id']
+        _id = obs_dict['observation_id']
     except:
         error = 'Missing observation_id.'
-        return {"observation_id":None,"error":error}
+        return jsonify({"observation_id":None,"error":error})
     
     try:
-        observation = request['data']
+        observation = obs_dict['data']
     except:
         error = 'Missing data for the observation.'
-        return {"observation_id":_id, "error": error}
+        return jsonify({"observation_id":_id, "error": error})
     
     
     #implement the mapping for the valid values
@@ -94,7 +94,7 @@ def predict():
     for key in observation.keys():
         if key not in valid_category_map.keys():
             error = '{} is not valid input.'.format(key)
-            return {"observation_id":_id,"error":error}
+            return jsonify({"observation_id":_id,"error":error})
             
     
     for key, valid_categories in valid_category_map.items():
@@ -103,10 +103,10 @@ def predict():
             if value not in valid_categories:
                 error = "Invalid value provided for {}: {}. Allowed values are: {}".format(
                     key, value, ",".join(["'{}'".format(v) for v in valid_categories]))
-                return {"observation_id":_id,"error":error}
+                return jsonify({"observation_id":_id,"error":error})
         else:
             error = "Categorical field {} missing".format(key)
-            return {"observation_id":_id,"error":error}
+            return jsonify({"observation_id":_id,"error":error})
     
     
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
@@ -117,7 +117,7 @@ def predict():
     response['observation_id'] = _id
     response['prediction'] = prediction
     response['probability'] = proba
-    return response
+    return jsonify(response)
 
 '''
 @app.route('/predict', methods=['POST'])
