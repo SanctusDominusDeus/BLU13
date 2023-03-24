@@ -63,17 +63,16 @@ app = Flask(__name__)
 @app.route('/predict', methods=['POST'])
 def predict():
 
-    obs_dict = request.get_json()
-    print(obs_dict)
+    #obs_dict = request.get_json()
 
     try:
-        _id = obs_dict['observation_id']
+        _id = request['observation_id']
     except:
         error = 'Missing observation_id.'
         return {"observation_id":None,"error":error}
     
     try:
-        observation = obs_dict['data']
+        observation = request['data']
     except:
         error = 'Missing data for the observation.'
         return {"observation_id":_id, "error": error}
