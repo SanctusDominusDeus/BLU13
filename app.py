@@ -142,7 +142,7 @@ def predict():
     # Flask provides a deserialization convenience function called
     # get_json that will work if the mimetype is application/json.
     obs_dict = request.get_json()
-    _id = obs_dict['observation_id']
+    _id = int(obs_dict['observation_id'])
     observation = obs_dict['data']
     # Now do what we already learned in the notebooks about how to transform
     # a single observation into a dataframe that will work with a pipeline.
@@ -151,7 +151,7 @@ def predict():
     prediction = pipeline.predict(obs)[0]
     proba = pipeline.predict_proba(obs)[0, 1]
     ########response = {'observation_id':_id,'prediction': prediction,'probability': proba}
-    response = {'prediction': prediction,'probability': proba}
+    response = {'observation_id': _id,'probability': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
