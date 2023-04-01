@@ -150,7 +150,8 @@ def predict():
     # Now get ourselves an actual prediction of the positive class.
     prediction = pipeline.predict(obs)[0]
     proba = pipeline.predict_proba(obs)[0, 1]
-    response = {'observation_id':_id,'prediction': prediction,'probability': proba}
+    ########response = {'observation_id':_id,'prediction': prediction,'probability': proba}
+    response = {'observation_id':_id,'probability': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
