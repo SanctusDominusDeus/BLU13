@@ -58,7 +58,7 @@ with open('dtypes.pickle', 'rb') as fh:
 # Begin webserver stuff
 
 app = Flask(__name__)
-'''
+
 @app.route('/predict', methods=['POST'])
 def predict():
 
@@ -67,16 +67,15 @@ def predict():
     try:
         _id = obs_dict['observation_id']
     except:
+        _id = None
         error = 'Missing observation_id.'
-        return jsonify({"observation_id":None,"error":error})
-        #return {"observation_id":None,"error":error}
+        return jsonify({"observation_id":_id,"error":error})
     
     try:
         observation = obs_dict['data']
     except:
         error = 'Missing data for the observation.'
         return jsonify({"observation_id":_id, "error": error})
-        #return {"observation_id":_id, "error": error}
     
     
     #implement the mapping for the valid values
@@ -96,7 +95,6 @@ def predict():
         if key not in valid_category_map.keys():
             error = '{} is not valid input.'.format(key)
             return jsonify({"observation_id":_id,"error":error})
-            #return {"observation_id":_id,"error":error}
             
     
     for key, valid_categories in valid_category_map.items():
@@ -106,11 +104,9 @@ def predict():
                 error = "Invalid value provided for {}: {}. Allowed values are: {}".format(
                     key, value, ",".join(["'{}'".format(v) for v in valid_categories]))
                 return jsonify({"observation_id":_id,"error":error})
-                #return {"observation_id":_id,"error":error}
         else:
             error = "Categorical field {} missing".format(key)
             return jsonify({"observation_id":_id,"error":error})
-            #return {"observation_id":_id,"error":error}
     
     
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
@@ -119,7 +115,7 @@ def predict():
 
     response = dict()
     response['observation_id'] = _id
-    response['prediction'] = prediction
+    response['prediction'] = bool(prediction)
     response['probability'] = proba
     p = Prediction(
         observation_id=_id,
@@ -134,8 +130,6 @@ def predict():
         print(error_msg)
         DB.rollback()
     return jsonify(response)
-    #return response
-
 '''
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -165,7 +159,7 @@ def predict():
         print(error_msg)
         DB.rollback()
     return jsonify(response)
-
+'''
 
 @app.route('/update', methods=['POST'])
 def update():
@@ -179,12 +173,12 @@ def update():
         error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
         return jsonify({'error': error_msg})
         #return {'error': error_msg}
-
+'''
 @app.route('/list-db-contents')
 def list_db_contents():
     return jsonify([model_to_dict(obs) for obs in Prediction.select()])
     #return [model_to_dict(obs) for obs in Prediction.select()]
-
+'''
 # End webserver stuff
 ########################################
 
