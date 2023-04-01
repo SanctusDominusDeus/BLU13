@@ -151,7 +151,7 @@ def predict():
     prediction = pipeline.predict(obs)[0]
     proba = pipeline.predict_proba(obs)[0, 1]
     ########response = {'observation_id':_id,'prediction': prediction,'probability': proba}
-    response = {'probability': proba}
+    response = {'prediction': prediction,'probability': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
