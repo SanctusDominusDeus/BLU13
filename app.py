@@ -58,7 +58,7 @@ with open('dtypes.pickle', 'rb') as fh:
 # Begin webserver stuff
 
 app = Flask(__name__)
-
+'''
 @app.route('/predict', methods=['POST'])
 def predict():
 
@@ -69,12 +69,14 @@ def predict():
     except:
         error = 'Missing observation_id.'
         return jsonify({"observation_id":None,"error":error})
+        #return {"observation_id":None,"error":error}
     
     try:
         observation = obs_dict['data']
     except:
         error = 'Missing data for the observation.'
         return jsonify({"observation_id":_id, "error": error})
+        #return {"observation_id":_id, "error": error}
     
     
     #implement the mapping for the valid values
@@ -94,6 +96,7 @@ def predict():
         if key not in valid_category_map.keys():
             error = '{} is not valid input.'.format(key)
             return jsonify({"observation_id":_id,"error":error})
+            #return {"observation_id":_id,"error":error}
             
     
     for key, valid_categories in valid_category_map.items():
@@ -103,20 +106,35 @@ def predict():
                 error = "Invalid value provided for {}: {}. Allowed values are: {}".format(
                     key, value, ",".join(["'{}'".format(v) for v in valid_categories]))
                 return jsonify({"observation_id":_id,"error":error})
+                #return {"observation_id":_id,"error":error}
         else:
             error = "Categorical field {} missing".format(key)
             return jsonify({"observation_id":_id,"error":error})
+            #return {"observation_id":_id,"error":error}
     
     
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     prediction = pipeline.predict(obs)[0]
     proba = pipeline.predict_proba(obs)[0,1]
 
-    response = {}
+    response = dict()
     response['observation_id'] = _id
     response['prediction'] = prediction
     response['probability'] = proba
+    p = Prediction(
+        observation_id=_id,
+        proba=proba,
+        observation=request.data
+    )
+    try:
+        p.save()
+    except IntegrityError:
+        error_msg = 'Observation ID: "{}" already exists'.format(_id)
+        response['error'] = error_msg
+        print(error_msg)
+        DB.rollback()
     return jsonify(response)
+    #return response
 
 '''
 @app.route('/predict', methods=['POST'])
@@ -124,14 +142,14 @@ def predict():
     # Flask provides a deserialization convenience function called
     # get_json that will work if the mimetype is application/json.
     obs_dict = request.get_json()
-    _id = obs_dict['id']
-    observation = obs_dict['observation']
+    _id = obs_dict['observation_id']
+    observation = obs_dict['data']
     # Now do what we already learned in the notebooks about how to transform
     # a single observation into a dataframe that will work with a pipeline.
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     # Now get ourselves an actual prediction of the positive class.
     proba = pipeline.predict_proba(obs)[0, 1]
-    response = {'proba': proba}
+    response = {'probability': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
@@ -158,15 +176,13 @@ def update():
     except Prediction.DoesNotExist:
         error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
         return jsonify({'error': error_msg})
-
+        #return {'error': error_msg}
 
 @app.route('/list-db-contents')
 def list_db_contents():
-    return jsonify([
-        model_to_dict(obs) for obs in Prediction.select()
-    ])
+    return jsonify([model_to_dict(obs) for obs in Prediction.select()])
+    #return [model_to_dict(obs) for obs in Prediction.select()]
 
-'''
 # End webserver stuff
 ########################################
 
