@@ -23,12 +23,10 @@ from uuid import uuid4
 DB = connect('sqlite:///predictions.db')
 
 class Prediction(Model):
-    #observation_id = IntegerField(unique=True)
-    admission_id = IntegerField(unique=True)
-    observation_data = TextField()
-    #proba = FloatField()
-    predicted_readmitted = TextField()
-    actual_readmitted = TextField(null=True)
+    observation_id = IntegerField(unique=True)
+    observation = TextField()
+    proba = FloatField()
+    true_class = IntegerField(null=True)
 
     class Meta:
         database = DB
@@ -67,64 +65,38 @@ def predict():
     obs_dict = request.get_json()
 
     try:
-        _id = obs_dict['admission_id']
+        _id = obs_dict['observation_id']
     except:
         _id = None
-        error = 'Missing admission_id.'
-        return jsonify({"admission_id":_id,"error":error})
+        error = 'Missing observation_id.'
+        return jsonify({"observation_id":_id,"error":error})
     
     try:
-        #observation = obs_dict['data']
-        observation = obs_dict
-        del obs_dict['admission_id']
+        observation = obs_dict['data']
     except:
-        #changed
-        error = 'Unable to delete admission_id.'
-        return jsonify({"admission_id":_id, "error": error})
+        error = 'Missing data for the observation.'
+        return jsonify({"observation_id":_id, "error": error})
     
     
     #implement the mapping for the valid values
     
     valid_category_map = {
-                "patient_id":range(0,1000000),
-                "race": [],
-                "gender":['Male','Female'],
-                "age": ['[0-10)','[10-20)','[20-30)','[30-40)','[40-50)','[50-60)','[60-70)','[70-80)','[80-90)','[90-100)', None],                
-                "weight": [],
-                "admission_type_code": range(1,9),
-                "discharge_disposition_code": range(1,30),
-                "admission_source_code": range(1,27),
-                "time_in_hospital": range(0,15),
-                "payer_code":[],
-                "medical_specialty":[],
-                "has_prosthesis": ['TRUE', 'FALSE'],
-                "complete_vaccination_status":[],
-                "num_lab_procedures": [],
-                "num_procedures": range(1,10),
-                "num_medications": range(1,100),
-                "number_outpatient": range(1, 36),
-                "number_emergency": range(1,23),
-                "number_inpatient": range(1,19),
-                "diag_1":[],
-                "diag_2":[],
-                "diag_3":[],
-                "number_diagnoses":range(1,17),
-                "blood_type": [],
-                "hemoglobin_level": range(9, 20),
-                "blood_transfusion": ['TRUE','FALSE'],
-                "max_glu_serum": [],
-                "A1Cresult":[],
-                "diuretics": ['No', 'Yes'],
-                "insulin": ['No', 'Yes'],
-                "change":[],
-                "diabetesMed":['No', 'Yes']
+                "age": range(0,100),
+                "sex": ['Male','Female'],
+                "race": ['White', 'Black', 'Asian-Pac-Islander', 'Amer-Indian-Eskimo','Other'],
+                "workclass": ['State-gov', 'Self-emp-not-inc', 'Private', 'Federal-gov','Local-gov','?', 'Self-emp-inc', 'Without-pay', 'Never-worked'],
+                "education": ['Bachelors', 'HS-grad', '11th', 'Masters', '9th', 'Some-college','Assoc-acdm', 'Assoc-voc', '7th-8th', 'Doctorate', 'Prof-school','5th-6th', '10th', '1st-4th', 'Preschool', '12th'],
+                "marital-status": ['Never-married', 'Married-civ-spouse', 'Divorced','Married-spouse-absent', 'Separated', 'Married-AF-spouse','Widowed'],
+                "capital-gain": range(0,100000),
+                "capital-loss": range(0,4357),
+                "hours-per-week": range(0,24*7),
     }
     for key in observation.keys():
         if key not in valid_category_map.keys():
             error = '{} is not valid input.'.format(key)
             return jsonify({"observation_id":_id,"error":error})
             
-    ''' 
+    
     for key, valid_categories in valid_category_map.items():
         if key in observation:
             value = observation[key]
@@ -135,53 +107,78 @@ def predict():
         else:
             error = "Categorical field {} missing".format(key)
             return jsonify({"observation_id":_id,"error":error})
-    '''
+    
     
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     prediction = pipeline.predict(obs)[0]
-    #proba = pipeline.predict_proba(obs)[0,1]
+    proba = pipeline.predict_proba(obs)[0,1]
 
     response = dict()
-    #response['admission_id'] = _id
-    response['readmitted'] = prediction
-    #response['prediction'] = bool(prediction)
-    #response['probability'] = proba
+    response['observation_id'] = _id
+    response['prediction'] = bool(prediction)
+    response['probability'] = proba
     p = Prediction(
-        admission_id=_id,
-        #proba=proba,
-        #observation=request.data
-        observation_data=jsonify(observation),
-        predicted_readmitted = prediction
+        observation_id=_id,
+        proba=proba,
+        observation=request.data
     )
     try:
         p.save()
     except IntegrityError:
-        error_msg = 'Admission ID: "{}" already exists'.format(_id)
+        error_msg = 'Observation ID: "{}" already exists'.format(_id)
         response['error'] = error_msg
         print(error_msg)
         DB.rollback()
     return jsonify(response)
-
+'''
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Flask provides a deserialization convenience function called
+    # get_json that will work if the mimetype is application/json.
+    obs_dict = request.get_json()
+    _id = str(obs_dict['observation_id'])
+    observation = obs_dict['data']
+    # Now do what we already learned in the notebooks about how to transform
+    # a single observation into a dataframe that will work with a pipeline.
+    obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
+    # Now get ourselves an actual prediction of the positive class.
+    prediction = pipeline.predict(obs)[0]
+    proba = pipeline.predict_proba(obs)[0, 1]
+    ########response = {'observation_id':_id,'prediction': prediction,'probability': proba}
+    response = {'observation_id': _id,'probability': proba}
+    p = Prediction(
+        observation_id=_id,
+        proba=proba,
+        observation=request.data
+    )
+    try:
+        p.save()
+    except IntegrityError:
+        error_msg = 'Observation ID: "{}" already exists'.format(_id)
+        response['error'] = error_msg
+        print(error_msg)
+        DB.rollback()
+    return jsonify(response)
+'''
 
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
     try:
-        p = Prediction.get(Prediction.admission_id == obs['admission_id'])
-        p.actual_readmitted = obs['readmitted']
+        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p.true_class = obs['true_class']
         p.save()
-        ret_dict = model_to_dict(p)
-        del ret_dict['observation_data']
-        return jsonify(ret_dict)
-        #return jsonify(model_to_dict(p))
+        return jsonify(model_to_dict(p))
     except Prediction.DoesNotExist:
-        error_msg = 'Admission ID: "{}" does not exist'.format(obs['admission_id'])
+        error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
         return jsonify({'error': error_msg})
-
+        #return {'error': error_msg}
+'''
 @app.route('/list-db-contents')
 def list_db_contents():
     return jsonify([model_to_dict(obs) for obs in Prediction.select()])
-
+    #return [model_to_dict(obs) for obs in Prediction.select()]
+'''
 # End webserver stuff
 ########################################
 
