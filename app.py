@@ -76,10 +76,11 @@ def predict():
     try:
         #observation = obs_dict['data']
         observation = obs_dict
-        del obs_dict['admission_id']
+        del observation['admission_id']
+        test = list(observation.keys())[0]
     except:
         #changed
-        error = 'Unable to delete admission_id.'
+        error = 'No observation data.'
         return jsonify({"admission_id":_id, "error": error})
     
     
