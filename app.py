@@ -165,8 +165,7 @@ def predict():
             error = "Categorical field {} missing".format(key)
             return jsonify({"observation_id":_id,"error":error})
     '''
-    print(dtypes)
-    print(columns)
+    
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     prediction = pipeline.predict(obs)[0]
     #proba = pipeline.predict_proba(obs)[0,1]
@@ -180,10 +179,13 @@ def predict():
         admission_id=_id,
         #proba=proba,
         #observation=request.data
-        observation_data=jsonify(observation),
+        
+        #observation_data=jsonify(observation),
+        observation_data=observation,
         predicted_readmitted = prediction
     )
     try:
+        print(observation)
         p.save()
     except IntegrityError:
         error_msg = 'Admission ID: "{}" already exists'.format(_id)
