@@ -204,6 +204,7 @@ def update():
         p.save()
         ret_dict = model_to_dict(p)
         del ret_dict['observation_data']
+        del ret_dict['id']
         return jsonify(ret_dict)
         #return jsonify(model_to_dict(p))
     except Prediction.DoesNotExist:
