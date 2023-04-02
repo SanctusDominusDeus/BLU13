@@ -12,6 +12,33 @@ from playhouse.shortcuts import model_to_dict
 from playhouse.db_url import connect
 from uuid import uuid4
 
+baseline_columns = [
+"race",
+"gender",
+"age",
+"weight",
+"time_in_hospital",
+"medical_specialty",
+"has_prosthesis",
+"num_procedures",
+"number_outpatient",
+"number_emergency",
+"number_inpatient",
+"number_diagnoses",
+"blood_type",
+"hemoglobin_level",
+"blood_transfusion",
+"diuretics", "insulin", "change", "diabetesMed", "readmitted"]
+
+from sklearn.base import BaseEstimator, TransformerMixin
+class CustomTransformer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None):
+        return self
+    def transform(self, X, y=None):
+        Xdata = X.copy()
+        cols = baseline_columns.copy()
+        cols.remove("readmitted")
+        return Xdata[cols]
 
 ########################################
 # Begin database stuff
@@ -76,8 +103,8 @@ def predict():
     try:
         #observation = obs_dict['data']
         observation = obs_dict
-        del observation['admission_id']
-        test = list(observation.keys())[0]
+        #del observation['admission_id']
+        #test = list(observation.keys())[0]
     except:
         #changed
         error = 'No observation data.'
@@ -87,6 +114,7 @@ def predict():
     #implement the mapping for the valid values
     
     valid_category_map = {
+                "admission_id":range(0,1000000) ,
                 "patient_id":range(0,1000000),
                 "race": [],
                 "gender":['Male','Female'],
@@ -137,7 +165,8 @@ def predict():
             error = "Categorical field {} missing".format(key)
             return jsonify({"observation_id":_id,"error":error})
     '''
-    
+    print(dtypes)
+    print(columns)
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     prediction = pipeline.predict(obs)[0]
     #proba = pipeline.predict_proba(obs)[0,1]
