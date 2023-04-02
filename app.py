@@ -1,3 +1,4 @@
+from utils import *
 import os
 import json
 import pickle
@@ -114,38 +115,51 @@ def predict():
     #implement the mapping for the valid values
     
     valid_category_map = {
-                "admission_id":range(0,1000000) ,
-                "patient_id":range(0,1000000),
-                "race": [],
-                "gender":['Male','Female'],
+                "admission_id":int() ,
+                "patient_id":int(),
+                "race": ['White','Caucasian','European','AfricanAmerican','EURO','Afro American','?','African American','WHITE','Asian','Black','Hispanic','Other','Latino','AFRICANAMERICAN'],
+                "gender":['Male','Female','Unknown/Invalid'],
                 "age": ['[0-10)','[10-20)','[20-30)','[30-40)','[40-50)','[50-60)','[60-70)','[70-80)','[80-90)','[90-100)', None],                
-                "weight": [],
-                "admission_type_code": range(1,9),
-                "discharge_disposition_code": range(1,30),
-                "admission_source_code": range(1,27),
-                "time_in_hospital": range(0,15),
-                "payer_code":[],
-                "medical_specialty":[],
-                "has_prosthesis": ['TRUE', 'FALSE'],
-                "complete_vaccination_status":[],
+                "weight": ['?', None,'[50-75)','[25-50)','[75-100)','[125-150)','[100-125)','[0-25)','[150-175)','[175-200)'],
+                "admission_type_code": [ 3. , 6. , 2. , 1. , 5. , 8. ,None, 4. , 7.],
+                "discharge_disposition_code": [ 1. ,25. ,6. ,11. ,2. ,14. ,3. ,5. ,None, 18. ,4. ,13. ,22. ,24. ,8. ,23. ,7. ,28. ,15. ,16. ,9.],
+                "admission_source_code": [ 1 ,17 ,7 ,5 ,6 ,4 ,2 ,20 ,8 ,9 ,3 ,22],
+                "time_in_hospital": [2 ,4 ,3 ,6 ,1 ,10 ,9 ,11 ,7 ,8 ,5 ,13 ,14 ,12],
+                "payer_code":['?','UN','MC','SP','DM','HM','MD','BC','CM','CP','WC','OG','PO','MP','OT','CH','SI'],
+                "medical_specialty":['?','Family/GeneralPractice','InternalMedicine','Surgery-Neuro','Orthopedics-Reconstructive','Pulmonology','Surgery-General','Hematology/Oncology','Gastroenterology','Oncology','Emergency/Trauma','Cardiology','Neurology','Orthopedics','Nephrology','Surgery-Cardiovascular/Thoracic','Urology','Surgery-Vascular','ObstetricsandGynecology','Radiologist','Pediatrics'
+                                    ,'Surgery-Cardiovascular','DCPTEAM', 'Podiatry' ,'Psychiatry'
+                                    ,'Endocrinology' ,'Psychology' ,'PhysicalMedicineandRehabilitation'
+                                    ,'Surgery-Thoracic' ,'Endocrinology-Metabolism' ,'Pediatrics-Endocrinology'
+                                    ,'Hematology' ,'Osteopath' ,'Pediatrics-Pulmonology' ,'Otolaryngology'
+                                    ,'Obstetrics' ,'Resident' ,'Pediatrics-CriticalCare' ,'Gynecology'
+                                    ,'SurgicalSpecialty', 'Radiology' ,'Surgery-Plastic' ,'Hospitalist'
+                                    ,'Pathology', 'Surgery-Colon&Rectal' ,'InfectiousDiseases'
+                                    ,'Pediatrics-Hematology-Oncology' ,'Surgery-Maxillofacial'
+                                    ,'Psychiatry-Child/Adolescent', 'Anesthesiology-Pediatric' ,'Anesthesiology'
+                                    ,'PhysicianNotFound' ,'Cardiology-Pediatric' ,'Ophthalmology' ,'Surgeon'
+                                    ,'Psychiatry-Addictive' ,'Pediatrics-Neurology'
+                                    ,'Obsterics&Gynecology-GynecologicOnco', 'Rheumatology'
+                                    ,'AllergyandImmunology'],
+                "has_prosthesis": [False,True],
+                "complete_vaccination_status":['Complete','Incomplete','None'],
                 "num_lab_procedures": [],
-                "num_procedures": range(1,10),
-                "num_medications": range(1,100),
-                "number_outpatient": range(1, 36),
-                "number_emergency": range(1,23),
-                "number_inpatient": range(1,19),
+                "num_procedures": [1,0,4,3,2,6,5],
+                "num_medications": range(1,71),
+                "number_outpatient": [ 0 ,2  ,1 , 3 , 6 , 9 , 4 , 7 , 5 ,15 ,22 , 8 ,20 ,18 ,10 ,28 ,12 ,24 ,13 ,11 ,23 ,35 ,19, 25, 14],
+                "number_emergency": range(0,23),
+                "number_inpatient": range(0,19),
                 "diag_1":[],
                 "diag_2":[],
                 "diag_3":[],
                 "number_diagnoses":range(1,17),
-                "blood_type": [],
-                "hemoglobin_level": range(9, 20),
-                "blood_transfusion": ['TRUE','FALSE'],
-                "max_glu_serum": [],
-                "A1Cresult":[],
+                "blood_type": ['A-','O+','A+','B+','O-','AB-','AB+','B-'],
+                "hemoglobin_level": range(9, 20),#float
+                "blood_transfusion": [True, False],
+                "max_glu_serum": ['NONE','>200','None','>300','NORM','Norm'],
+                "A1Cresult":['None','>8','>7', 'Norm'],
                 "diuretics": ['No', 'Yes'],
                 "insulin": ['No', 'Yes'],
-                "change":[],
+                "change":['No','Ch'],
                 "diabetesMed":['No', 'Yes']
     }
     for key in observation.keys():
